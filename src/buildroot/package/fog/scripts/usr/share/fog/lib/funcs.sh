@@ -355,6 +355,37 @@ getHardDisk()
 	return 1;
 }
 
+#Detect the boot partition using parted and sed
+getBootPartition()
+{
+
+        #using local variables to prevent overwriting other variables used by fog scripts
+        local drive=$hd
+
+        local partNum="1"
+
+        #set a sane default should boot partition detection fail
+        local part=$drive$partNum
+
+        #list all partitions on $drive in a machine-readable format, then return the partition number of the drive with the 'boot' flag
+        #if $drive is empty, list all partitions on all drives to try to find boot partition
+        if [ -n "$drive" ]
+        then
+                local partNum=`parted $drive -m print | grep 'boot' | cut -d: -f1`;
+        else
+                local partNum=`parted -l | grep 'boot' | cut -d: -f1`;
+        fi
+
+        if [ -n "$partNum" ]
+        then
+                local part=$drive$partNum;
+        fi
+
+        bootPartition=$part;
+
+}
+
+
 correctVistaMBR()
 {
 	dots "Correcting Vista MBR";

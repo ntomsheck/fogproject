@@ -13,7 +13,11 @@ getSAMLoc;
 
 if [ -n "$hd" ]; then
 
-	part="${hd}1";
+        #if boot partition detection is disabled, $bootPartition will return whatever is set for $part
+        getBootPartition;
+
+        part=$bootPartition;
+
 	dots "Mounting Windows File System";
 	mkdir /ntfs;
 	mount.ntfs-3g $part /ntfs 

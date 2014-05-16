@@ -77,6 +77,12 @@ if [ -f "/images/.mntcheck" ]; then
 				fi
 				clearMountedDevices;
 			fi
+
+		        #if boot partition detection is disabled, $bootPartition will return whatever is set for $part
+		        #getBootPartition;
+
+		        #part=$bootPartition;
+
 			if [ "$ignorepg" == "1" ]; then
 				dots "Mounting device";
 				mkdir /ntfs &>/dev/null;

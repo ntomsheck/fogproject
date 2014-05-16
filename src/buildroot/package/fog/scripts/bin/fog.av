@@ -9,7 +9,7 @@ setupDNS ${dns}
 echo "";
 echo "";
 if [ -n "$hd" ]; then
-	part=$hd'1';	
+
 	if [ "$osid" == "5" ]; then
 		win7partcnt="0";
 		parts=`fogpartinfo --list-parts $hd 2>/dev/null`;
@@ -19,6 +19,12 @@ if [ -n "$hd" ]; then
 		done
 		part=${hd}${win7partcnt};
 	fi
+
+	#if boot partition detection is disabled, $bootPartition will return whatever is set for $part
+        getBootPartition;
+
+        part=$bootPartition;
+
 	dots "Using disk device";
 	echo $hd
 	dots "Scanning partition";

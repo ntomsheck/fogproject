@@ -1313,6 +1313,14 @@ $databaseSchema[] = array(
     "UPDATE `" . DATABASE_NAME . "`.`globalSettings` set settingValue = 'memtest.bin' WHERE settingKey = 'FOG_MEMTEST_KERNEL'",
 );
 
+// 99
+//by ntomsheck
+//Adds database field to disable boot partition detection, should that cause problems
+$databaseSchema[] = array(
+    "ALTER TABLE `" . DATABASE_NAME . "`.`hosts` 
+	    ADD COLUMN `hostDisablePartitionDetection` char(1) NOT NULL",
+);
+
 
 print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';
 print "\n".'<html xmlns="http://www.w3.org/1999/xhtml">';

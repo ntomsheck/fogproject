@@ -175,6 +175,7 @@ class HostManagementPage extends FOGPage
 			_('Host Kernel') => '<input type="text" name="kern" value="${host_kern}" />',
 			_('Host Kernel Arguments') => '<input type="text" name="args" value="${host_args}" />',
 			_('Host Primary Disk') => '<input type="text" name="dev" value="${host_devs}" />',
+			_('Disable Boot Partition Detection') => '<input type="checkbox" name="bootpart" value="1" ${partition_detection_disabled} />',
 		);
 		$fieldsad = array(
 			_('Join Domain after image task') => '<input id="adEnabled" type="checkbox" name="domain"${ad_dom}value="on" />',
@@ -198,6 +199,7 @@ class HostManagementPage extends FOGPage
 				'host_kern' => $_REQUEST['kern'],
 				'host_args' => $_REQUEST['args'],
 				'host_devs' => $_REQUEST['dev'],
+				'partition_detection_disabled' => ((isset($_REQUEST['bootpart']) && $_REQUEST['bootpart'] == 1) ? 'checked="checked"' : ''),
 				'host_locs' => ($LocPluginInst ? $this->FOGCore->getClass('LocationManager')->buildSelectBox($_REQUEST['location']) : ''),
 			);
 		}
@@ -257,6 +259,7 @@ class HostManagementPage extends FOGPage
 				'kernel'	=> $_POST['kern'],
 				'kernelArgs'	=> $_POST['args'],
 				'kernelDevice'	=> $_POST['dev'],
+				'disablePartitionDetection' => $_POST['bootpart'],
 				'useAD'		=> ($_POST["domain"] == "on" ? '1' : '0'),
 				'ADDomain'	=> $_POST['domainname'],
 				'ADOU'		=> $_POST['ou'],
@@ -366,6 +369,7 @@ class HostManagementPage extends FOGPage
 			_('Host Kernel') => '<input type="text" name="kern" value="${host_kern}" />',
 			_('Host Kernel Arguments') => '<input type="text" name="args" value="${host_args}" />',
 			_('Host Primary Disk') => '<input type="text" name="dev" value="${host_devs}" />',
+			_('Disable Boot Partition Detection') => '<input type="checkbox" name="bootpart" value="1" ${partition_detection_disabled} />',
 			'&nbsp' => '<input type="submit" value="'._('Update').'" />',
 		);
 		print "\n\t\t\t".'<div id="tab-container">';
@@ -387,8 +391,10 @@ class HostManagementPage extends FOGPage
 				'host_kern' => $Host->get('kernel'),
 				'host_args' => $Host->get('kernelArgs'),
 				'host_devs' => $Host->get('kernelDevice'),
+				'partition_detection_disabled' => (($Host->get('disablePartitionDetection') == 1) ? 'checked="checked"' : ''),
 			);
 		}
+
 		// Hook
 		$this->HookManager->processEvent('HOST_EDIT_GEN', array('headerData' => &$this->headerData, 'data' => &$this->data, 'templates' => &$this->templates, 'attributes' => &$this->attributes));
 		$this->render();
@@ -1043,7 +1049,8 @@ class HostManagementPage extends FOGPage
 							->set('imageID',	$_POST['image'])
 							->set('kernel',		$_POST['kern'])
 							->set('kernelArgs',	$_POST['args'])
-							->set('kernelDevice',	$_POST['dev']);
+							->set('kernelDevice',	$_POST['dev'])
+							->set('disablePartitionDetection', $_POST['bootpart']);
 					// Add Additional MAC Addresses
 					foreach((array)$_POST['additionalMACs'] AS $MAC)
 					{
@@ -1475,7 +1482,7 @@ class HostManagementPage extends FOGPage
 		print "\n\t\t\t".'<div class="advanced-settings">';
 		print "\n\t\t\t<h2>"._('Advanced Settings').'</h2>';
 		print "\n\t\t\t".'<p><input type="checkbox" name="shutdown" id="shutdown" value="1" autocomplete="off"><label for="shutdown">'._('Schedule').' <u>'._('Shutdown').'</u>'._(' after task completion').'</label></p>';
-		if (!$TaskType->isDebug() && $TaskType->get('id') != 11)
+		if (!$TaskType->isDebug())
 		{
 			print "\n\t\t\t".'<p><input type="radio" name="scheduleType" id="scheduleInstant" value="instant" autocomplete="off" checked="checked" /><label for="scheduleInstant">'._('Schedule ').' <u>'._('Instant Deployment').'</u></label></p>';
 			print "\n\t\t\t".'<p><input type="radio" name="scheduleType" id="scheduleSingle" value="single" autocomplete="off" /><label for="scheduleSingle">'._('Schedule ').' <u>'._('Delayed Deployment').'</u></label></p>';
@@ -1488,11 +1495,6 @@ class HostManagementPage extends FOGPage
 			print "\n\t\t\t".'<input type="text" name="scheduleCronMonth" id="scheduleCronMonth" placeholder="month" autocomplete="off" />';
 			print "\n\t\t\t".'<input type="text" name="scheduleCronDOW" id="scheduleCronDOW" placeholder="dow" autocomplete="off" />';
 			print "\n\t\t\t</p>";
-		}
-		if ($TaskType->get('id') == 11)
-		{
-			print "\n\t\t\t<p>"._('Which account would you like to reset the password for?').'</p>';
-			print "\n\t\t\t".'<input type="text" name="account" value="Administrator" />';
 		}
 		print "\n\t\t\t</div>";
 		print "\n\t\t\t</div>";
@@ -1542,13 +1544,11 @@ class HostManagementPage extends FOGPage
 				throw new Exception(_('You need to assign an image to the host'));
 			if (!$Host->checkIfExist($taskTypeID))
 				throw new Exception(_('To setup download task, you must first upload an image'));
-			if ($taskTypeID == '11' && !trim($_REQUEST['account']))
-				throw new Exception(_('To setup password reset request, you must specify a user'));
 			if ($this->REQUEST['scheduleType'] == 'single')
 			{
 				// Scheduled Deployment
 				// NOTE: Function will throw an exception if it fails
-				$Host->createSingleRunScheduledPackage($taskTypeID, $taskName, $scheduledDeployTime, $enableShutdown, $enableSnapins, $this->FOGUser->get('name'),trim($_REQUEST['account']));
+				$Host->createSingleRunScheduledPackage($taskTypeID, $taskName, $scheduledDeployTime, $enableShutdown, $enableSnapins, $this->FOGUser->get('name'));
 				// Success
 				printf('%s',sprintf('<div class="task-start-ok"><p>%s task created for <u>%s</u> with image <u>%s</u></p><p>%s%s</p></div>',$TaskType->get('name'),$Host->get('name'),$Host->getImage()->get('name'),_('Scheduled to start at: '),$_REQUEST['scheduleSingleTime']));
 			}
@@ -1564,7 +1564,7 @@ class HostManagementPage extends FOGPage
 			{
 				// Instant Deployment
 				// NOTE: Function will throw an exception if it fails
-				$Host->createImagePackage($taskTypeID, $taskName, $enableShutdown, $enableDebug, $enableSnapins, false,$this->FOGUser->get('name'),$_REQUEST['account']);
+				$Host->createImagePackage($taskTypeID, $taskName, $enableShutdown, $enableDebug, $enableSnapins, $this->FOGUser->get('name'));
 				// Success
 				printf('%s',sprintf('<div class="task-start-ok"><p>%s task created for <u>%s</u> with image <u>%s</u></p></div>',$TaskType->get('name'),$Host->get('name'),$Host->getImage()->get('name')));
 			}

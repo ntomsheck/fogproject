@@ -279,6 +279,7 @@ class BootMenu
 				"imgid=$imgid",
 				"imgLegacy=$imgLegacy",
 				"PIGZ_COMP=-$PIGZ_COMP",
+				"disablePartitionDetection=" . (!empty($this->Host->get('disablePartitionDetection')) ? $this->Host->get('disablePartitionDetection') : 0),
 				array(
 					'value' => 'shutdown=1',
 					'active' => $Task->get('shutdown'),

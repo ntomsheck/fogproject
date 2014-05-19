@@ -355,33 +355,38 @@ getHardDisk()
 	return 1;
 }
 
-#Detect the boot partition using parted and sed
+#Detect the boot partition using parted and grep
 getBootPartition()
 {
+
+        #use existing $part variable if set, or set to first partition.
+        #This allows FOG to behave as normal if partition detection is disabled or fails
+        if [ -n "$part" ]; then
+                bootPartition=$part;
+        else
+                bootPartition="$hd"1
+        fi
+
+        #stop processing this function immediately if disablePartitionDetection is set
+        if [ "$disablePartitionDetection" -eq 1 ]; then
+                return;
+        fi
 
         #using local variables to prevent overwriting other variables used by fog scripts
         local drive=$hd
 
-        local partNum="1"
-
-        #set a sane default should boot partition detection fail
-        local part=$drive$partNum
-
         #list all partitions on $drive in a machine-readable format, then return the partition number of the drive with the 'boot' flag
         #if $drive is empty, list all partitions on all drives to try to find boot partition
-        if [ -n "$drive" ]
-        then
+        if [ -n "$drive" ]; then
                 local partNum=`parted $drive -m print | grep 'boot' | cut -d: -f1`;
         else
                 local partNum=`parted -l | grep 'boot' | cut -d: -f1`;
         fi
 
-        if [ -n "$partNum" ]
-        then
-                local part=$drive$partNum;
+        #only write to $bootPartition if a boot partition was detected.  Otherwise bootPartition will remain as the defaults above
+        if [ -n "$partNum" ]; then
+                bootPartition=$drive$partNum;
         fi
-
-        bootPartition=$part;
 
 }
 

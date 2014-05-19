@@ -9,7 +9,7 @@ setupDNS ${dns}
 echo "";
 echo "";
 if [ -n "$hd" ]; then
-
+        part=$hd'1';
 	if [ "$osid" == "5" ]; then
 		win7partcnt="0";
 		parts=`fogpartinfo --list-parts $hd 2>/dev/null`;

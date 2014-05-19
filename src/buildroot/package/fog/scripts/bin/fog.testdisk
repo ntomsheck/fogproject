@@ -14,7 +14,10 @@ if [ -n "$hd" ]; then
 	echo "";
 	sleep 2;
 
-	testdisk ${hd}1;
+	getBootPartition;
+
+	part=$bootPartition;
+	testdisk $part;
 
 	echo "";
 	

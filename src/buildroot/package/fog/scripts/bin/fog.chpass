@@ -13,7 +13,8 @@ getSAMLoc;
 
 if [ -n "$hd" ]; then
 
-        #if boot partition detection is disabled, $bootPartition will return whatever is set for $part
+	part="${hd}1";
+
         getBootPartition;
 
         part=$bootPartition;
